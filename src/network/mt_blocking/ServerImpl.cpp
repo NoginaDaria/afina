@@ -106,10 +106,10 @@ void ServerImpl::Join() {
 
 void ServerImpl::Worker(int client_socket) {
 
-	std::size_t arg_remains;
+	std::size_t arg_remains = 0;
     	Protocol::Parser parser;
-    	std::string argument_for_command;
-    	std::unique_ptr<Execute::Command> command_to_execute;	
+    	std::string argument_for_command = "";
+	std::unique_ptr<Execute::Command> command_to_execute;	
 
 	try {
             int readed_bytes = -1;
