@@ -94,11 +94,10 @@ void ServerImpl::Stop() {
 void ServerImpl::Join() {
     assert(_thread.joinable());
     _thread.join();
-    close(_server_socket);
 
     {
 	std::unique_lock<std::mutex> lock(_m);
-	while (_sockets_active.empty() && !running.load()) {
+	while (!_sockets_active.empty()) {
 		cv.wait(lock);
 	}	
     }
@@ -113,7 +112,7 @@ void ServerImpl::Worker(int client_socket) {
 
 	try {
             int readed_bytes = -1;
-            char client_buffer[4096];
+            char client_buffer[4096] = "";
             while ((readed_bytes = read(client_socket, client_buffer, sizeof(client_buffer))) > 0) {
                 _logger->debug("Got {} bytes from socket", readed_bytes);
 
@@ -269,10 +268,9 @@ void ServerImpl::OnRun() {
 
 	    }
 	}
-
-    // Cleanup on exit...
-    _logger->warn("Network stopped");
     }
+    close(_server_socket);
+    _logger->warn("Network stopped");
 }
 
         // TODO: Start new thread and process data from/to connection
