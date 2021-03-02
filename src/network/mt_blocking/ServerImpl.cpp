@@ -256,7 +256,7 @@ void ServerImpl::OnRun() {
 	{
 	    std::unique_lock<std::mutex> lock(_m);
 
-	    if (_sockets_active.size() < _max_workers) {
+	    if (_sockets_active.size() < _max_workers && running.load()) {
 
 	        _sockets_active.insert(client_socket);
 		std::thread cur_client(&ServerImpl::Worker, this, client_socket);
