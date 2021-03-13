@@ -35,7 +35,7 @@ bool Parser::Parse(const char *input, const size_t size, size_t &parsed) {
                 } else if (name == "stats") {
                     state = State::sLF;
                     continue;
-                } else {
+		} else {
                     throw std::runtime_error("Unknown command name: " + name);
                 }
             } else {

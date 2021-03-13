@@ -147,7 +147,7 @@ void SimpleLRU::_move_to_head(lru_node* node) {
 	return;
 }
 
-void SimpleLRU::_clean_memory(std::size_t pair_size) {
+void SimpleLRU::_clean_memory(int pair_size) {
 
 	_curr_size += pair_size;
 

@@ -200,7 +200,7 @@ TEST(StorageTest, MaxTest) {
 }
 
 //testing if we put a bigger value
-TEST(StorageTest, PutBigger) {
+TEST(StorageTest, SetAtEnd) {
 	SimpleLRU storage(8);
 	
 	EXPECT_TRUE(storage.Put("a", "111"));
@@ -219,3 +219,16 @@ TEST(StorageTest, PutBigger) {
 	EXPECT_FALSE(storage.Get("a", value));
 }
 
+TEST(StorageTest, SetIfBigger) {
+	SimpleLRU storage(13);
+
+	EXPECT_TRUE(storage.Put("a", "111"));
+	EXPECT_TRUE(storage.Put("b", "222"));
+	EXPECT_TRUE(storage.Put("c", "333"));
+
+	EXPECT_TRUE(storage.Set("b", "2222"));
+	std::string value;
+	EXPECT_TRUE(storage.Get("a", value));
+	EXPECT_TRUE(storage.Get("b", value));
+	EXPECT_TRUE(storage.Get("c", value));
+}
