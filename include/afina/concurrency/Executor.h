@@ -8,6 +8,7 @@
 #include <queue>
 #include <string>
 #include <thread>
+#include <chrono>
 
 namespace Afina {
 namespace Concurrency {
@@ -24,11 +25,11 @@ class Executor {
         // completed as requested
         kStopping,
 
-        // Threadppol is stopped
+        // Threadpool is stopped
         kStopped
     };
-
-    Executor(std::string name, int size);
+public:
+    Executor(size_t low_watermark=4, size_t high_watermark=8, size_t max_queue_size=50, std::chrono::milliseconds idle_time=std::chrono::milliseconds(10000));
     ~Executor();
 
     /**
@@ -51,11 +52,15 @@ class Executor {
         auto exec = std::bind(std::forward<F>(func), std::forward<Types>(args)...);
 
         std::unique_lock<std::mutex> lock(this->mutex);
-        if (state != State::kRun) {
+        if ((state != State::kRun) || (tasks.size() >= max_queue_size)) {
             return false;
         }
 
         // Enqueue new task
+	// Add new thread if we need one
+	if ((threads.size() == running_threads) && (running_threads < high_watermark)){
+	    threads.emplace_back(std::thread(&Executor::perform, this));
+	}
         tasks.push_back(exec);
         empty_condition.notify_one();
         return true;
@@ -71,7 +76,7 @@ private:
     /**
      * Main function that all pool threads are running. It polls internal task queue and execute tasks
      */
-    friend void perform(Executor *executor);
+    void perform();
 
     /**
      * Mutex to protect state below from concurrent modification
@@ -82,6 +87,11 @@ private:
      * Conditional variable to await new data in case of empty queue
      */
     std::condition_variable empty_condition;
+
+    /**
+     * Conditional variable to wait untill all threads are stopped
+     */
+    std::condition_variable stop_condition;
 
     /**
      * Vector of actual threads that perorm execution
@@ -97,6 +107,32 @@ private:
      * Flag to stop bg threads
      */
     State state;
+
+    /**
+     * Min threads in pool
+     */
+    const size_t low_watermark;
+
+    /**
+     * Max threads in pool
+     */
+    const size_t high_watermark;
+
+    /**
+     * Number of running threads
+     */
+    size_t running_threads;
+
+    /**
+     * Max tasks in a queue
+     */
+    const size_t max_queue_size;
+
+    /**
+     * Waiting time of thread before detaching (if number of threads > low_watermark)
+     */
+    const std::chrono::milliseconds idle_time;
+
 };
 
 } // namespace Concurrency
